@@ -2,7 +2,7 @@
 #include "SX1272.h"
 #include <SPI.h>
 
-#define LoRaSerialDebug 1 // Set to 1 to enable serial monitoring of LoRa Actions
+#define LoRaSerialDebug 1 // Set to 1 to enable serial monitoring of LoRa actions, else set to 0
 
 // LoRa Protocol Version
 static const int PROTOCOL_BEGIN = 0;
@@ -91,8 +91,9 @@ void setup()
 
 void loop()
 {
-  sendMsg("La licorne au fromage", 0);
+  sendMsg("La licorne au fromage.", 0);
   delay(10000);
+  Rx();
 }
 
 /**
@@ -141,42 +142,58 @@ void sendMsg(String msg, int reciever) {
   #endif
 }
 
+/**
+ * Listen for incoming messages.
+ */
 void Rx() {
     // Receive message
-  Serial.println("Listen");
+  #if (LoRaSerialDebug == 1)
+    Serial.println("Listening...");
+  #endif
   e = sx1272.receivePacketTimeout();
   if( 0 == e )
   {
-    Serial.println( "We got a message !" );
+    #if (LoRaSerialDebug == 1)
+      Serial.println("=======================================");
+      Serial.println("");
+      Serial.println("");
+      Serial.println( "Recieving new message..." );
+    #endif
     using namespace std;
-    //PAYLOAD
+    // PAYLOAD
     char *frame_raw = (char *)sx1272.packet_received.data;
     size_t length_raw = (size_t)sx1272._payloadlength;
 
-    //Version 
+    // Version 
     uint8_t version_number = frame_raw[0];
     char *frame = frame_raw;
     size_t length = length_raw;
 
     String device_id;
-
-    Serial.println( device_id );
-
     decode_header( 
         version_number, 
         frame_raw, length_raw, 
         frame, length,
         device_id );
-
-    Serial.println( "Message:");
+        
+    #if (LoRaSerialDebug == 1)
+      Serial.println("Sender Device Id: " + String(device_id) );
+      Serial.println("Content: ");
+    #endif
+    
     for( int c=0; c<length; ++c )
     {
-      Serial.print( (char)frame[c] );
+      #if (LoRaSerialDebug == 1)
+        Serial.print( (char)frame[c] );
+      #endif
     }
-    Serial.println("");
-    Serial.println("");
-    Serial.println("=======================================");
-    Serial.println("");
+    // TODO: Add a callback/Event call with the recieved message
+    #if (LoRaSerialDebug == 1)
+      Serial.println("");
+      Serial.println("");
+      Serial.println("=======================================");
+      Serial.println("");
+    #endif
   }
 }
 
