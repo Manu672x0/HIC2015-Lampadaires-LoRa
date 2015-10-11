@@ -2,22 +2,102 @@
 #include "SX1272.h"
 #include <SPI.h>
 
-// define a protocol version
+#define LoRaSerialDebug 1 // Set to 1 to enable serial monitoring of LoRa Actions
+
+// LoRa Protocol Version
 static const int PROTOCOL_BEGIN = 0;
 static const int PROTOCOL_SIZE = 1;
 uint8_t protocol_version = 0x00;
 
-// define a global device number
+// LoRa Device Parameters
 static const int ADDRESS_BEGIN = PROTOCOL_BEGIN + PROTOCOL_SIZE;
 static const int ADDRESS_SIZE = 3;
 static const int ADDRESS_END = ADDRESS_BEGIN+ADDRESS_SIZE;
+
+// LoRa: UNIQUE DEVICE ADDRESS
 uint8_t device_address[ADDRESS_SIZE] = { 0x00, 0x00, 0x43 };
 
+// LoRa: Helpers
 int e;
+char char_msg[256];
+  
 
-// define the destination address to send packets
-int rx_address = 42;
 
+void setupLoRa() {
+  // Power ON the module
+  e = sx1272.ON();
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting power ON: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Set transmission mode and print the result
+  e = sx1272.setMode(1);
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting Mode 1: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Set header
+  e = sx1272.setHeaderON();
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting Header ON: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Select frequency channel
+  e = sx1272.setChannel(CH_16_868);
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting Channel CH_16_868: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Set CRC
+  e = sx1272.setCRC_ON();
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting CRC ON: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Select output power (Max, High or Low)
+  e = sx1272.setPower('M');
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting Power M: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Set the node address and print the result
+  e = sx1272.setNodeAddress(3);
+  #if (LoRaSerialDebug == 1)
+    Serial.print(F("Setting node address: state "));
+    Serial.println(e, DEC);
+  #endif
+  
+  // Print a success message
+  #if (LoRaSerialDebug == 1)
+    Serial.println(F("SX1272 for LoRa successfully configured"));
+    Serial.println(F("Note: State = 0 means everythings fine!"));
+    Serial.println();
+  #endif
+}
+
+void setup()
+{
+  Serial.begin(9600);
+  // Initialize LoRa Communication
+  setupLoRa();
+  
+}
+
+void loop()
+{
+  sendMsg("La licorne au fromage", 0);
+  delay(10000);
+}
+
+/**
+ * Header Decoding
+ */
 bool decode_header( 
     const uint8_t version_number,
     char * const frame_raw,
@@ -40,68 +120,13 @@ bool decode_header(
   return false;
 }
 
-void setup()
-{
-  Serial.begin(9600);
-  Serial.println("Temperature and humidity data sent via LoRa.");
-
-  
-  // Power ON the module
-  e = sx1272.ON();
-  Serial.print(F("Setting power ON: state "));
-  Serial.println(e, DEC);
-  
-  // Set transmission mode and print the result
-  e = sx1272.setMode(1);
-  Serial.print(F("Setting Mode 1: state "));
-  Serial.println(e, DEC);
-  
-  // Set header
-  e = sx1272.setHeaderON();
-  Serial.print(F("Setting Header ON: state "));
-  Serial.println(e, DEC);
-  
-  // Select frequency channel
-  e = sx1272.setChannel(CH_16_868);
-  Serial.print(F("Setting Channel CH_16_868: state "));
-  Serial.println(e, DEC);
-  
-  // Set CRC
-  e = sx1272.setCRC_ON();
-  Serial.print(F("Setting CRC ON: state "));
-  Serial.println(e, DEC);
-  
-  // Select output power (Max, High or Low)
-  e = sx1272.setPower('M');
-  Serial.print(F("Setting Power M: state "));
-  Serial.println(e, DEC);
-  
-  // Set the node address and print the result
-  e = sx1272.setNodeAddress(3);
-  Serial.print(F("Setting node address: state "));
-  Serial.println(e, DEC);
-  
-  // Print a success message
-  Serial.println(F("SX1272 successfully configured"));
-  Serial.println();
-}
-
-char   char_msg[256];  
-
-void loop()
-{
-  sendMsg();
-  delay(10000);
-}
-
-void sendMsg() {
-  //Begin print
-  Serial.println();
-  //End print
-  
-  String msg = "Rubarbe" + String('#');
-  
-  
+/**
+ * Sends a message to a defined address
+ * Prameters:
+ * msg: {String} The message to send.
+ * reviecer: {int} The address of the reciever.
+ */
+void sendMsg(String msg, int reciever) {
   //Message begins with protocole version
   char_msg[0] = protocol_version;
   //Message continue with global device address
@@ -109,13 +134,11 @@ void sendMsg() {
   for( int i=ADDRESS_END; i<256; ++i ){ char_msg[i] = 0; }
   msg.toCharArray( char_msg+ADDRESS_END, msg.length()+1 );
 
-  e = sx1272.sendPacketTimeout(rx_address, (uint8_t*)char_msg, msg.length()+ADDRESS_END );
-  //e = sx1272.sendPacketTimeout(rx_address, "Test" );
-  Serial.print(F("Packet sent, state "));
-  Serial.println(e, DEC);
-  //delay( 600000 );//10min
-  delay( 5000 );//30s
-  //delay( 60000 );//1min
+  e = sx1272.sendPacketTimeout(reciever, (uint8_t*)char_msg, msg.length()+ADDRESS_END );
+  #if (LoRaSerialDebug == 1)
+    Serial.print("Packet sent: '" + msg + "', state ");
+    Serial.println(e, DEC);
+  #endif
 }
 
 void Rx() {
