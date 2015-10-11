@@ -38,7 +38,7 @@ static const int ADDRESS_END = ADDRESS_BEGIN+ADDRESS_SIZE;
 // Set to 1 to enable serial monitoring of LoRa actions, else set to 0
 #define LoRaSerialDebug 1
 // Set the power mode of LoRa (Please check the limitation defined by LAW) M:max/H:high/L:low
-static const char LoRaPoweringMode = 'M';
+static const char LoRaPoweringMode = 'L';
 // LoRa: UNIQUE DEVICE ADDRESS (hex).(hex).(hex) --> The last will be the device address
 uint8_t device_address[ADDRESS_SIZE] = { 0x00, 0x00, 0x2a };
 
@@ -94,7 +94,7 @@ void LoRaSetup() {
   #endif
   
   // Set the node address and print the result.
-  e = sx1272.setNodeAddress(3);
+  e = sx1272.setNodeAddress(device_address[ADDRESS_SIZE-1]);
   #if (LoRaSerialDebug == 1)
     Serial.print(F("Setting node address: state "));
     Serial.println(e, DEC);
@@ -122,7 +122,7 @@ void loop()
 {
   LoRaSendMsg("A unicorn is drinking a Schnaps, and eating a delicus piece of (french) cheese.", 43);
   delay(10000);
-  LoRaRecieve();
+  //LoRaRecieve();
 }
 
 /**
@@ -164,7 +164,7 @@ void LoRaSendMsg(String msg, int recieverAddress) {
   for( int i=ADDRESS_END; i<256; ++i ){ char_msg[i] = 0; }
   msg.toCharArray( char_msg+ADDRESS_END, msg.length()+1 );
 
-  e = sx1272.sendPacketTimeout(recieverAddress, (uint8_t*)char_msg, msg.length()+ADDRESS_END );
+  e = sx1272.sendPacketTimeoutACKRetries(recieverAddress, (uint8_t*)char_msg, msg.length()+ADDRESS_END );
   #if (LoRaSerialDebug == 1)
     Serial.print("Packet sent: '" + msg + "', To: '" + recieverAddress + "', State ");
     Serial.println(e, DEC);
@@ -179,7 +179,7 @@ void LoRaRecieve() {
   #if (LoRaSerialDebug == 1)
     Serial.println("Listening...");
   #endif
-  e = sx1272.receivePacketTimeout();
+  e = sx1272.receivePacketTimeoutACK();
   if( 0 == e )
   {
     #if (LoRaSerialDebug == 1)
