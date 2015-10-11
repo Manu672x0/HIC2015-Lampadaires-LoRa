@@ -1,3 +1,22 @@
+/* 
+  HIC2015-Lampadaires-LoRa based on sx1270 and Stratagem/Wavebricks. 
+  Copyright (C) 2015 Manuel Rauscher
+    
+  This program is free software: you can redistribute it and/or modify 
+  it under the terms of the GNU General Public License as published by 
+  the Free Software Foundation, either version 3 of the License, or 
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+  GNU General Public License for more details. 
+  
+  You should have received a copy of the GNU General Public License 
+  along with this program.  If not, see <http://www.gnu.org/licenses/>. 
+
+*/
+
 // Include the SX1272 and SPI library: 
 #include "SX1272.h"
 #include <SPI.h>
@@ -19,9 +38,9 @@ static const int ADDRESS_END = ADDRESS_BEGIN+ADDRESS_SIZE;
 // Set to 1 to enable serial monitoring of LoRa actions, else set to 0
 #define LoRaSerialDebug 1
 // Set the power mode of LoRa (Please check the limitation defined by LAW) M:max/H:high/L:low
-static const char LoRaPoweringMode = 'L';
+static const char LoRaPoweringMode = 'M';
 // LoRa: UNIQUE DEVICE ADDRESS (hex).(hex).(hex) --> The last will be the device address
-uint8_t device_address[ADDRESS_SIZE] = { 0x00, 0x00, 0x2b };
+uint8_t device_address[ADDRESS_SIZE] = { 0x00, 0x00, 0x2a };
 
 /*
  * ~~~~ END LORA CONFIGURATION ~~~~
@@ -101,7 +120,7 @@ void setup()
 
 void loop()
 {
-  LoRaSendMsg("A unicorn is drinking a Schnaps, and eating a delicus piece of (french) cheese.", 42);
+  LoRaSendMsg("A unicorn is drinking a Schnaps, and eating a delicus piece of (french) cheese.", 43);
   delay(10000);
   LoRaRecieve();
 }
