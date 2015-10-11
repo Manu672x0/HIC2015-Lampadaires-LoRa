@@ -2,7 +2,8 @@
 #include "SX1272.h"
 #include <SPI.h>
 
-#define LoRaSerialDebug 1 // Set to 1 to enable serial monitoring of LoRa actions, else set to 0
+// Set to 1 to enable serial monitoring of LoRa actions, else set to 0
+#define LoRaSerialDebug 1 
 
 // LoRa Protocol Version
 static const int PROTOCOL_BEGIN = 0;
@@ -23,7 +24,7 @@ char char_msg[256];
   
 
 
-void setupLoRa() {
+void LoRaSetup() {
   // Power ON the module
   e = sx1272.ON();
   #if (LoRaSerialDebug == 1)
@@ -71,10 +72,6 @@ void setupLoRa() {
   #if (LoRaSerialDebug == 1)
     Serial.print(F("Setting node address: state "));
     Serial.println(e, DEC);
-  #endif
-  
-  // Print a success message
-  #if (LoRaSerialDebug == 1)
     Serial.println(F("SX1272 for LoRa successfully configured"));
     Serial.println(F("Note: State = 0 means everythings fine!"));
     Serial.println();
@@ -85,15 +82,15 @@ void setup()
 {
   Serial.begin(9600);
   // Initialize LoRa Communication
-  setupLoRa();
+  LoRaSetup();
   
 }
 
 void loop()
 {
-  sendMsg("La licorne au fromage.", 0);
+  LoRaSendMsg("A unicorn is drinking a Schnaps, and eating a delicus piece of (french) cheese.", 0);
   delay(10000);
-  Rx();
+  LoRaRecieve();
 }
 
 /**
@@ -127,7 +124,7 @@ bool decode_header(
  * msg: {String} The message to send.
  * reviecer: {int} The address of the reciever.
  */
-void sendMsg(String msg, int reciever) {
+void LoRaSendMsg(String msg, int reciever) {
   //Message begins with protocole version
   char_msg[0] = protocol_version;
   //Message continue with global device address
@@ -145,7 +142,7 @@ void sendMsg(String msg, int reciever) {
 /**
  * Listen for incoming messages.
  */
-void Rx() {
+void LoRaRecieve() {
     // Receive message
   #if (LoRaSerialDebug == 1)
     Serial.println("Listening...");
